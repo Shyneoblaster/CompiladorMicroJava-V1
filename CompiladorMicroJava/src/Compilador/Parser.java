@@ -148,7 +148,7 @@ public class Parser {
                 }
             }
         }else if(match(5) || match(6)){
-
+            return;
         }else{
             throw new RuntimeException("Expresión inesperada: " + peek());
         }
