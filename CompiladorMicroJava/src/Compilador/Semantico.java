@@ -109,21 +109,38 @@ public class Semantico {
                 if (!"boolean".equals(tipoExpr)) {
                     throw new RuntimeException("La condición del while debe ser booleana.");
                 }
-                String leftvalue = tokens.get(pos - 3).value;
-                if (match(11)) { // )
-                    if (match(8)) { // {
-                        String rightValue = tokens.get(pos - 3).value;
 
-                        instruccionesIntermedias.add(new Triple("WHILE", leftvalue, rightValue));
-                        System.out.println("instrucción WHILE agregada: " + leftvalue + " " + rightValue);
-                        ProdStatements();
-                        instruccionesIntermedias.add(new Triple("END_WHILE", null, null));
-                        if (!match(9)) throw new RuntimeException("Se esperaba '}' en while.");
+                // Check if it's a single boolean variable or a relational expression
+                if (peek().code == 11) { // Single boolean variable (e.g., WHILE (y);)
+                    String condition = tokens.get(pos - 1).value; // Get the condition (e.g., "y")
+                    System.out.println(condition);
+                    if (match(11)) { // )
+                        if (match(8)) { // {
+                            instruccionesIntermedias.add(new Triple("WHILE", condition, null)); // Add WHILE instruction
+                            ProdStatements();
+                            instruccionesIntermedias.add(new Triple("END_WHILE", null, null)); // Add END_WHILE instruction
+                            if (!match(9)) throw new RuntimeException("Se esperaba '}' en while.");
+                        } else {
+                            throw new RuntimeException("Se esperaba '{' en while.");
+                        }
                     } else {
-                        throw new RuntimeException("Se esperaba '{' en while.");
+                        throw new RuntimeException("Se esperaba ')' en while.");
                     }
-                } else {
-                    throw new RuntimeException("Se esperaba ')' en while.");
+                } else { // Relational expression (e.g., WHILE (x < 10);)
+                    String leftValue = tokens.get(pos - 3).value; // Left operand
+                    String rightValue = tokens.get(pos - 1).value; // Right operand
+                    if (match(11)) { // )
+                        if (match(8)) { // {
+                            instruccionesIntermedias.add(new Triple("WHILE", leftValue, rightValue)); // Add WHILE instruction
+                            ProdStatements();
+                            instruccionesIntermedias.add(new Triple("END_WHILE", null, null)); // Add END_WHILE instruction
+                            if (!match(9)) throw new RuntimeException("Se esperaba '}' en while.");
+                        } else {
+                            throw new RuntimeException("Se esperaba '{' en while.");
+                        }
+                    } else {
+                        throw new RuntimeException("Se esperaba ')' en while.");
+                    }
                 }
             } else {
                 throw new RuntimeException("Se esperaba '(' en while.");
@@ -154,14 +171,12 @@ public class Semantico {
                 String tipoVar = symbolTable.get(varName);
                 Token value = tokens.get(pos - 1); // Último token evaluado
                 Token value2;
-                System.out.println(value);
                 if (!tipoVar.equals(tipoExpr)) {
                     throw new RuntimeException("Incompatibilidad de tipos en asignación: variable '" + varName +
                             "' es " + tipoVar + " y se intenta asignar " + tipoExpr + ".");
                 }
                 if (!match(12)) throw new RuntimeException("Se esperaba ';' en asignación.");
                 value2 = tokens.get(pos - 3);
-                System.out.println(value2);
                 // Verificar si es una operación aritmética
                 if (value2.code == 15) { // +, -, *
                     instruccionesIntermedias.add(new Triple("ADD", varName, value.value));

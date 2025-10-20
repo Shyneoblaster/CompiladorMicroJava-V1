@@ -67,9 +67,18 @@ public class CodigoIntermedio {
 
                 case "WHILE":
                     codigo.append("WHILE_").append(contadorWhile).append("_START:\n");
-                    codigo.append("\tMOV \tAX, ").append(instruccion.arg1).append("\n");
-                    codigo.append("\tCMP \tAX, ").append(instruccion.arg2).append("\n");
-                    codigo.append("\tJGE \tWHILE_").append(contadorWhile).append("_END\n");
+
+                    String tipoArg1 = tablaSimbolos.get(instruccion.arg1);
+                    String tipoArg2 = tablaSimbolos.get(instruccion.arg2);
+                    System.out.println("Generando WHILE con tipos: " + tipoArg1 + ", " + tipoArg2);
+                    if ("int".equalsIgnoreCase(tipoArg1) && "int".equalsIgnoreCase(tipoArg2)) {
+                        codigo.append("\tMOV \tAX, ").append(instruccion.arg1).append("\n");
+                        codigo.append("\tCMP \tAX, ").append(instruccion.arg2).append("\n");
+                        codigo.append("\tJGE \tWHILE_").append(contadorWhile).append("_END\n");
+                    } else if ("boolean".equalsIgnoreCase(tipoArg1)) {
+                        codigo.append("\tCMP \t").append(instruccion.arg1).append(", 1\n");
+                        codigo.append("\tJE \tWHILE_").append(contadorWhile).append("_END\n");
+                    }
                     contadorWhile++;
                     break;
 
