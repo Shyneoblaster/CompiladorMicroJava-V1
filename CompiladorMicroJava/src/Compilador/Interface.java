@@ -96,6 +96,7 @@ public class Interface extends JFrame {
                         btnParser.setEnabled(false);
                         btnSintactico.setEnabled(false);
                         btnTablaSimbolos.setEnabled(false);
+                        btnIntermedio.setEnabled(false);
                         txtTokens.setText("");
                         txtParser.setText("");
                         txtSemantico.setText("");

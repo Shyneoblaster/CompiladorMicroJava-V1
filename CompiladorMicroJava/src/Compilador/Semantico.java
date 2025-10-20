@@ -111,21 +111,22 @@ public class Semantico {
                 }
 
                 // Check if it's a single boolean variable or a relational expression
-                if (peek().code == 11) { // Single boolean variable (e.g., WHILE (y);)
-                    String condition = tokens.get(pos - 1).value; // Get the condition (e.g., "y")
-                    System.out.println(condition);
+                if (peek().code == 11) { // Single boolean variable
+                    Token conditionToken = tokens.get(pos - 1);
+                    String variableName = conditionToken.value;
+                    String value = symbolTable.get(variableName).equals("boolean") ? "true" : "false";
+
                     if (match(11)) { // )
                         if (match(8)) { // {
-                            instruccionesIntermedias.add(new Triple("WHILE", condition, null)); // Add WHILE instruction
+                            instruccionesIntermedias.add(new Triple("WHILE", variableName, value));
                             ProdStatements();
-                            instruccionesIntermedias.add(new Triple("END_WHILE", null, null)); // Add END_WHILE instruction
+                            instruccionesIntermedias.add(new Triple("END_WHILE", null, null));
                             if (!match(9)) throw new RuntimeException("Se esperaba '}' en while.");
                         } else {
                             throw new RuntimeException("Se esperaba '{' en while.");
                         }
-                    } else {
-                        throw new RuntimeException("Se esperaba ')' en while.");
                     }
+                }
                 } else { // Relational expression (e.g., WHILE (x < 10);)
                     String leftValue = tokens.get(pos - 3).value; // Left operand
                     String rightValue = tokens.get(pos - 1).value; // Right operand
@@ -139,13 +140,9 @@ public class Semantico {
                             throw new RuntimeException("Se esperaba '{' en while.");
                         }
                     } else {
-                        throw new RuntimeException("Se esperaba ')' en while.");
+                    throw new RuntimeException("Se esperaba ')' en while.");
                     }
                 }
-            } else {
-                throw new RuntimeException("Se esperaba '(' en while.");
-            }
-
         } else if (match(7)) { // print
             if (match(10)) { // (
                 String tipoExpr = ProdExpression();

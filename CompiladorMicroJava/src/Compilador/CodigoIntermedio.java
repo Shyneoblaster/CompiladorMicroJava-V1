@@ -69,15 +69,17 @@ public class CodigoIntermedio {
                     codigo.append("WHILE_").append(contadorWhile).append("_START:\n");
 
                     String tipoArg1 = tablaSimbolos.get(instruccion.arg1);
-                    String tipoArg2 = tablaSimbolos.get(instruccion.arg2);
-                    System.out.println("Generando WHILE con tipos: " + tipoArg1 + ", " + tipoArg2);
-                    if ("int".equalsIgnoreCase(tipoArg1) && "int".equalsIgnoreCase(tipoArg2)) {
-                        codigo.append("\tMOV \tAX, ").append(instruccion.arg1).append("\n");
-                        codigo.append("\tCMP \tAX, ").append(instruccion.arg2).append("\n");
-                        codigo.append("\tJGE \tWHILE_").append(contadorWhile).append("_END\n");
-                    } else if ("boolean".equalsIgnoreCase(tipoArg1)) {
-                        codigo.append("\tCMP \t").append(instruccion.arg1).append(", 1\n");
-                        codigo.append("\tJE \tWHILE_").append(contadorWhile).append("_END\n");
+                    System.out.println("Generando WHILE con tipo: " + tipoArg1);
+
+                    if ("boolean".equalsIgnoreCase(tipoArg1)) {
+                        codigo.append("\tMOV \tAL, ").append(instruccion.arg1).append("\n");
+                        if ("true".equalsIgnoreCase(instruccion.arg2)) {
+                            codigo.append("\tCMP \tAL, 1\n");
+                            codigo.append("\tJNE \tWHILE_").append(contadorWhile).append("_END\n");
+                        } else {
+                            codigo.append("\tCMP \tAL, 0\n");
+                            codigo.append("\tJE \tWHILE_").append(contadorWhile).append("_END\n");
+                        }
                     }
                     contadorWhile++;
                     break;
@@ -90,8 +92,18 @@ public class CodigoIntermedio {
 
                 case "PRINT":
                     codigo.append("\t; println(").append(instruccion.arg1).append(")\n");
-                    codigo.append("\tMOV \tAX, ").append(instruccion.arg1).append("\n");
-                    codigo.append("\tCALL \tPrintNumber\n");
+
+                    tipoArg1 = tablaSimbolos.get(instruccion.arg1);
+
+                    if ("int".equalsIgnoreCase(tipoArg1)) {
+                        codigo.append("\tMOV \tAX, ").append(instruccion.arg1).append("\n");
+                        codigo.append("\tCALL \tPrintNumber\n");
+                    } else if ("boolean".equalsIgnoreCase(tipoArg1)) {
+                        codigo.append("\tMOV \tAL, ").append(instruccion.arg1).append("\n");
+                        codigo.append("\tMOV \tAH,0 ").append("\n");
+                        codigo.append("\tCALL \tPrintNumber\n");
+                    }
+
                     codigo.append("\tMOV \tDL, 13\n");
                     codigo.append("\tMOV \tAH, 02h\n");
                     codigo.append("\tINT \t21h\n");
