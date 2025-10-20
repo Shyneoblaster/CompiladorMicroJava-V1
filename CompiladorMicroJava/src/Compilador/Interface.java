@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Interface extends JFrame {
 
@@ -204,9 +205,43 @@ public class Interface extends JFrame {
                 panel.add(btnTablaSimbolos, BorderLayout.SOUTH);
 
                 break;
+
             case "Codigo Intermedio":
                 btnTokens = new JButton("Codigo Intermedio");
                 btnTokens.setPreferredSize(new Dimension(80, 30));
+                btnTokens.addActionListener(e -> {
+                    try {
+                        // Obtener el programa fuente
+                        String codigoFuente = txtProg.getText();
+
+                        // Tokenizar el programa
+                        Scanner scanner = new Scanner(codigoFuente);
+                        java.util.List<Token> tokens = scanner.tokenize();
+
+                        // Analizar sintácticamente
+                        Parser parser = new Parser();
+                        parser.Parser((ArrayList<Token>) tokens);
+
+                        // Realizar análisis semántico
+                        Semantico semantico = new Semantico();
+                        semantico.Semantico((ArrayList<Token>) tokens);
+
+                        // Obtener la tabla de símbolos
+                        HashMap<String, String> tablaSimbolos = semantico.getTablaSimbolos();
+
+                        // Generar código intermedio
+                        ArrayList<Triple> instrucciones = semantico.getInstruccionesIntermedias();
+                        CodigoIntermedio codigoIntermedio = new CodigoIntermedio(tablaSimbolos);
+                        String codigoGenerado = codigoIntermedio.generarCodigo(instrucciones);
+
+                        // Mostrar el código intermedio en el área de texto
+                        txtCI.setText(codigoGenerado);
+                        txtError.setText("");
+                    } catch (Exception ex) {
+                        txtError.setText("Error al generar código intermedio:\n" + ex.getMessage());
+                        txtCI.setText("");
+                    }
+                });
                 panel.add(btnTokens, BorderLayout.NORTH);
                 break;
 

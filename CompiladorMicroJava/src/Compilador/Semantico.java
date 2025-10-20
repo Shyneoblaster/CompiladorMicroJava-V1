@@ -11,7 +11,16 @@ public class Semantico {
 
     // Tabla de símbolos (nombre → tipo)
     private HashMap<String, String> symbolTable = new HashMap<>();
+    public HashMap<String, String> getTablaSimbolos() {
+        return symbolTable;
+    }
+    // Add this field to the Semantico class
+    private ArrayList<Triple> instruccionesIntermedias = new ArrayList<>();
 
+    // Implement the getInstruccionesIntermedias method
+    public ArrayList<Triple> getInstruccionesIntermedias() {
+        return instruccionesIntermedias;
+    }
     // Lista de símbolos para mostrar en JTable
     private ArrayList<Simbolo> simbolos = new ArrayList<>();
 
