@@ -50,8 +50,19 @@ public class CodigoIntermedio {
             switch (instruccion.operador) {
                 case "ASSIGN":
                     codigo.append("\t; ").append(instruccion.arg1).append(" = ").append(instruccion.arg2).append("\n");
-                    codigo.append("\tMOV \tAX, ").append(instruccion.arg2).append("\n");
-                    codigo.append("\tMOV \t").append(instruccion.arg1).append(", AX\n");
+                    String tipoVariable = tablaSimbolos.get(instruccion.arg1);
+
+                    if ("int".equalsIgnoreCase(tipoVariable)) {
+                        codigo.append("\tMOV \tAX, ").append(instruccion.arg2).append("\n");
+                        codigo.append("\tMOV \t").append(instruccion.arg1).append(", AX\n");
+                    } else if ("boolean".equalsIgnoreCase(tipoVariable)) {
+                        if ("true".equals(instruccion.arg2)) {
+                            codigo.append("\tMOV \tAL, 1\n");
+                        } else if ("false".equals(instruccion.arg2)) {
+                            codigo.append("\tMOV \tAL, 0\n");
+                        }
+                        codigo.append("\tMOV \t").append(instruccion.arg1).append(", AL\n");
+                    }
                     break;
 
                 case "WHILE":
@@ -101,8 +112,6 @@ public class CodigoIntermedio {
                     codigo.append("\tMUL \tBX").append("\n");
                     codigo.append("\tMOV \t").append(instruccion.arg1).append(", AX\n");
                     break;
-                default:
-                    throw new RuntimeException("Operador no soportado: " + instruccion.operador);
             }
         }
     }
