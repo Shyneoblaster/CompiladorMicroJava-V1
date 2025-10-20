@@ -62,6 +62,9 @@ public class Semantico {
 
     // --- Program ::= class Identifier { Statement* } <EOF>
     private void ProdProgram() {
+        if (tokens == null) {
+            throw new IllegalArgumentException("La lista de tokens no puede ser nula.");
+        }
         if (match(1)) { // class
             if (match(18)) { // Identifier
                 if (match(8)) { // {
@@ -150,23 +153,34 @@ public class Semantico {
                 String tipoExpr = ProdExpression();
                 String tipoVar = symbolTable.get(varName);
                 Token value = tokens.get(pos - 1); // Último token evaluado
-
+                Token value2;
+                System.out.println(value);
                 if (!tipoVar.equals(tipoExpr)) {
                     throw new RuntimeException("Incompatibilidad de tipos en asignación: variable '" + varName +
                             "' es " + tipoVar + " y se intenta asignar " + tipoExpr + ".");
                 }
-
                 if (!match(12)) throw new RuntimeException("Se esperaba ';' en asignación.");
-
+                value2 = tokens.get(pos - 3);
+                System.out.println(value2);
                 // Verificar si es una operación aritmética
-                if (value.code == 15 || value.code == 16 || value.code == 17) { // +, -, *
+                if (value2.code == 15) { // +, -, *
                     instruccionesIntermedias.add(new Triple("ADD", varName, value.value));
+                } else if (value2.code == 16){
+                    instruccionesIntermedias.add(new Triple("MINUS", varName, value.value));
+                } else if (value2.code == 17){
+                    instruccionesIntermedias.add(new Triple("MUL", varName, value.value));
                 } else {
                     instruccionesIntermedias.add(new Triple("ASSIGN", varName, value.value));
                 }
             } else {
                 throw new RuntimeException("Se esperaba '=' en asignación.");
             }
+
+        } else if (peek().code == 2 || peek().code == 3) {
+            ProdVarDeclaration();
+
+        } else {
+            throw new RuntimeException("Sentencia inesperada: " + peek());
         }
     }
 
