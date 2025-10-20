@@ -9,7 +9,7 @@ import java.util.HashMap;
 public class Interface extends JFrame {
 
     private JTextArea txtProg, txtTokens, txtError, txtParser, txtSemantico, txtCI, txtCO;
-    private JButton btnParser, btnTokens, btnSintactico, btnTablaSimbolos;
+    private JButton btnParser, btnTokens, btnSintactico, btnTablaSimbolos, btnIntermedio, btnObjeto;
     private JMenuBar menuBar;
     private JMenu menuArchivo;
     private JMenuItem itemNuevo, itemAbrir, itemGuardarComo, itemSalir;
@@ -79,6 +79,7 @@ public class Interface extends JFrame {
     private JTextArea crearPanelConTitulo(String titulo, JPanel contenedor) {
         JPanel panel = new JPanel(new BorderLayout());
         JTextArea txtArea = new JTextArea();
+        txtArea.setFont(new Font("Monospaced", Font.PLAIN, 24));
         JScrollPane scroll = new JScrollPane(txtArea);
         JLabel lbl = new JLabel(titulo, SwingConstants.CENTER);
 
@@ -98,6 +99,7 @@ public class Interface extends JFrame {
                         txtTokens.setText("");
                         txtParser.setText("");
                         txtSemantico.setText("");
+                        txtCI.setText("");
                     }
                 });
                 panel.add(lbl, BorderLayout.NORTH);
@@ -169,7 +171,7 @@ public class Interface extends JFrame {
                         txtError.setText("");
 
                         btnTablaSimbolos.setEnabled(true);
-
+                        btnIntermedio.setEnabled(true);
                     } catch (Exception ex) {
                         txtArea.setText(ex.getMessage());
                     }
@@ -207,9 +209,10 @@ public class Interface extends JFrame {
                 break;
 
             case "Codigo Intermedio":
-                btnTokens = new JButton("Codigo Intermedio");
-                btnTokens.setPreferredSize(new Dimension(80, 30));
-                btnTokens.addActionListener(e -> {
+                btnIntermedio = new JButton("Codigo Intermedio");
+                btnIntermedio.setEnabled(false);
+                btnIntermedio.setPreferredSize(new Dimension(80, 30));
+                btnIntermedio.addActionListener(e -> {
                     try {
                         // Obtener el programa fuente
                         String codigoFuente = txtProg.getText();
@@ -241,13 +244,13 @@ public class Interface extends JFrame {
                         txtCI.setText("Error al generar código intermedio:\n" + ex.getMessage());
                     }
                 });
-                panel.add(btnTokens, BorderLayout.NORTH);
+                panel.add(btnIntermedio, BorderLayout.NORTH);
                 break;
 
             case "Codigo Objeto":
-                btnTokens = new JButton("Codigo Objeto");
-                btnTokens.setPreferredSize(new Dimension(80, 30));
-                panel.add(btnTokens, BorderLayout.NORTH);
+                btnObjeto = new JButton("Codigo Objeto");
+                btnObjeto.setPreferredSize(new Dimension(80, 30));
+                panel.add(btnObjeto, BorderLayout.NORTH);
                 break;
 
             default:

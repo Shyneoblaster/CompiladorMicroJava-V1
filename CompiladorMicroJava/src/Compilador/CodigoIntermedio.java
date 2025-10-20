@@ -16,7 +16,7 @@ public class CodigoIntermedio {
 
     public String generarCodigo(ArrayList<Triple> instrucciones) {
         generarEncabezado();
-        generarSeccionDatos();
+        generarSeccionDatos(instrucciones);
         generarSeccionCodigo(instrucciones);
         generarPie(instrucciones);
         return codigo.toString();
@@ -28,13 +28,19 @@ public class CodigoIntermedio {
         codigo.append("\t.STACK 100h\n");
     }
 
-    private void generarSeccionDatos() {
+    private void generarSeccionDatos(ArrayList<Triple> instrucciones) {
         codigo.append("\t.DATA\n");
         for (String variable : tablaSimbolos.keySet()) {
-            codigo.append("\t"+variable).append("\tDW ? ; Variable ").append(variable).append("\n");
+            String tipo = tablaSimbolos.get(variable);
+            if ("int".equalsIgnoreCase(tipo)) {
+                codigo.append("\t").append(variable).append("\tDW ? ; Variable int ").append(variable).append("\n");
+            } else if ("boolean".equalsIgnoreCase(tipo)) {
+                codigo.append("\t").append(variable).append("\tDB ? ; Variable boolean ").append(variable).append("\n");
+            } else {
+                throw new RuntimeException("Tipo de variable no soportado: " + tipo);
+            }
         }
     }
-
     private void generarSeccionCodigo(ArrayList<Triple> instrucciones) {
         codigo.append("\t.CODE\n");
         codigo.append("MAIN \tPROC \tFAR\n");
