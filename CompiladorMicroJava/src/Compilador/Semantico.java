@@ -14,13 +14,14 @@ public class Semantico {
     public HashMap<String, String> getTablaSimbolos() {
         return symbolTable;
     }
-    // Add this field to the Semantico class
+
+    // Lista de instrucciones intermedias
     private ArrayList<Triple> instruccionesIntermedias = new ArrayList<>();
 
-    // Implement the getInstruccionesIntermedias method
     public ArrayList<Triple> getInstruccionesIntermedias() {
         return instruccionesIntermedias;
     }
+
     // Lista de símbolos para mostrar en JTable
     private ArrayList<Simbolo> simbolos = new ArrayList<>();
 
@@ -33,6 +34,7 @@ public class Semantico {
         this.encontrado = false;
         this.symbolTable.clear();
         this.simbolos.clear();
+        this.instruccionesIntermedias.clear();
         this.currentDir = 0;
         ProdProgram();
     }
@@ -104,9 +106,15 @@ public class Semantico {
                 if (!"boolean".equals(tipoExpr)) {
                     throw new RuntimeException("La condición del while debe ser booleana.");
                 }
+                String leftvalue = tokens.get(pos - 3).value;
                 if (match(11)) { // )
                     if (match(8)) { // {
+                        String rightValue = tokens.get(pos - 3).value;
+
+                        instruccionesIntermedias.add(new Triple("WHILE", leftvalue, rightValue));
+                        System.out.println("instrucción WHILE agregada: " + leftvalue + " " + rightValue);
                         ProdStatements();
+                        instruccionesIntermedias.add(new Triple("END_WHILE", null, null));
                         if (!match(9)) throw new RuntimeException("Se esperaba '}' en while.");
                     } else {
                         throw new RuntimeException("Se esperaba '{' en while.");
@@ -121,8 +129,10 @@ public class Semantico {
         } else if (match(7)) { // print
             if (match(10)) { // (
                 String tipoExpr = ProdExpression();
+                Token value = tokens.get(pos - 1); // Último token evaluado
                 if (match(11)) { // )
                     if (!match(12)) throw new RuntimeException("Se esperaba ';' en print.");
+                    instruccionesIntermedias.add(new Triple("PRINT", value.value, null));
                 } else {
                     throw new RuntimeException("Se esperaba ')' en print.");
                 }
@@ -139,20 +149,24 @@ public class Semantico {
             if (match(13)) { // =
                 String tipoExpr = ProdExpression();
                 String tipoVar = symbolTable.get(varName);
+                Token value = tokens.get(pos - 1); // Último token evaluado
+
                 if (!tipoVar.equals(tipoExpr)) {
                     throw new RuntimeException("Incompatibilidad de tipos en asignación: variable '" + varName +
                             "' es " + tipoVar + " y se intenta asignar " + tipoExpr + ".");
                 }
+
                 if (!match(12)) throw new RuntimeException("Se esperaba ';' en asignación.");
+
+                // Verificar si es una operación aritmética
+                if (value.code == 15 || value.code == 16 || value.code == 17) { // +, -, *
+                    instruccionesIntermedias.add(new Triple("ADD", varName, value.value));
+                } else {
+                    instruccionesIntermedias.add(new Triple("ASSIGN", varName, value.value));
+                }
             } else {
                 throw new RuntimeException("Se esperaba '=' en asignación.");
             }
-
-        } else if (peek().code == 2 || peek().code == 3) {
-            ProdVarDeclaration();
-
-        } else {
-            throw new RuntimeException("Sentencia inesperada: " + peek());
         }
     }
 
@@ -196,7 +210,6 @@ public class Semantico {
     }
 
     // --- Expression
-    // --- Expression ::= SimpleExpression (RelOp SimpleExpression)?
     private String ProdExpression() {
         String leftType = ProdSimpleExpression();
 
@@ -216,8 +229,6 @@ public class Semantico {
         return leftType; // devuelve int o boolean
     }
 
-
-    // --- SimpleExpression ::= Term ( ( + | - ) Term )*
     private String ProdSimpleExpression() {
         String type = ProdTerm();
 
@@ -233,7 +244,6 @@ public class Semantico {
         return type;
     }
 
-    // --- Term ::= Factor ( ( * ) Factor )*
     private String ProdTerm() {
         String type = ProdFactor();
 
@@ -249,7 +259,6 @@ public class Semantico {
         return type;
     }
 
-    // --- Factor ::= número | true | false | identificador
     private String ProdFactor() {
         if (match(5)) return "boolean"; // true
         if (match(6)) return "boolean"; // false

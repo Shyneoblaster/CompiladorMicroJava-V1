@@ -66,12 +66,11 @@ public class CodigoIntermedio {
                     codigo.append("    ; println(").append(instruccion.arg1).append(")\n");
                     codigo.append("    MOV AX, ").append(instruccion.arg1).append("\n");
                     codigo.append("    CALL PrintNumber\n");
-                    codigo.append("    MOV AH, 02h\n");
                     codigo.append("    MOV DL, 13\n");
+                    codigo.append("    MOV AH, 02h\n");
                     codigo.append("    INT 21h\n");
                     codigo.append("    MOV DL, 10\n");
-                    codigo.append("    INT 21h\n");
-                    codigo.append("    MOV AH, 09h\n");
+                    codigo.append("    MOV AH, 02h\n");
                     codigo.append("    INT 21h\n");
                     break;
 

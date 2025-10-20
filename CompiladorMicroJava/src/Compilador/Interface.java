@@ -238,8 +238,7 @@ public class Interface extends JFrame {
                         txtCI.setText(codigoGenerado);
                         txtError.setText("");
                     } catch (Exception ex) {
-                        txtError.setText("Error al generar código intermedio:\n" + ex.getMessage());
-                        txtCI.setText("");
+                        txtCI.setText("Error al generar código intermedio:\n" + ex.getMessage());
                     }
                 });
                 panel.add(btnTokens, BorderLayout.NORTH);
