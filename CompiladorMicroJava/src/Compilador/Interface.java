@@ -250,6 +250,7 @@ public class Interface extends JFrame {
 
             case "Codigo Objeto":
                 btnObjeto = new JButton("Codigo Objeto");
+                btnObjeto.setEnabled(false);
                 btnObjeto.setPreferredSize(new Dimension(80, 30));
                 panel.add(btnObjeto, BorderLayout.NORTH);
                 break;

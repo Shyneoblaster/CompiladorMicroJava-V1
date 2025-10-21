@@ -104,45 +104,54 @@ public class Semantico {
     // --- Statement
     private void ProdStatement() {
         if (match(4)) { // while
-            if (match(10)) { // (
-                String tipoExpr = ProdExpression();
-                if (!"boolean".equals(tipoExpr)) {
-                    throw new RuntimeException("La condición del while debe ser booleana.");
+            if (!match(10)) { // (
+                throw new RuntimeException("Se esperaba '(' después de while");
+            }
+
+            String tipoExpr = ProdExpression();
+            if (!"boolean".equals(tipoExpr)) {
+                throw new RuntimeException("La condición del while debe ser booleana.");
+            }
+
+            // Verificar si es una expresión relacional
+            if (tokens.get(pos - 2).code == 14) { // Si el token anterior es un operador relacional
+                Token leftOperand = tokens.get(pos - 3);
+                Token operator = tokens.get(pos - 2);
+                Token rightOperand = tokens.get(pos - 1);
+
+                if (!match(11)) { // )
+                    throw new RuntimeException("Se esperaba ')'");
+                }
+                if (!match(8)) { // {
+                    throw new RuntimeException("Se esperaba '{'");
                 }
 
-                // Check if it's a single boolean variable or a relational expression
-                if (peek().code == 11) { // Single boolean variable
-                    Token conditionToken = tokens.get(pos - 1);
-                    String variableName = conditionToken.value;
-                    String value = symbolTable.get(variableName).equals("boolean") ? "true" : "false";
+                instruccionesIntermedias.add(new Triple("WHILE", leftOperand.value, rightOperand.value));
+                ProdStatements();
+                instruccionesIntermedias.add(new Triple("END_WHILE", null, null));
 
-                    if (match(11)) { // )
-                        if (match(8)) { // {
-                            instruccionesIntermedias.add(new Triple("WHILE", variableName, value));
-                            ProdStatements();
-                            instruccionesIntermedias.add(new Triple("END_WHILE", null, null));
-                            if (!match(9)) throw new RuntimeException("Se esperaba '}' en while.");
-                        } else {
-                            throw new RuntimeException("Se esperaba '{' en while.");
-                        }
-                    }
+                if (!match(9)) { // }
+                    throw new RuntimeException("Se esperaba '}'");
                 }
-                } else { // Relational expression (e.g., WHILE (x < 10);)
-                    String leftValue = tokens.get(pos - 3).value; // Left operand
-                    String rightValue = tokens.get(pos - 1).value; // Right operand
-                    if (match(11)) { // )
-                        if (match(8)) { // {
-                            instruccionesIntermedias.add(new Triple("WHILE", leftValue, rightValue)); // Add WHILE instruction
-                            ProdStatements();
-                            instruccionesIntermedias.add(new Triple("END_WHILE", null, null)); // Add END_WHILE instruction
-                            if (!match(9)) throw new RuntimeException("Se esperaba '}' en while.");
-                        } else {
-                            throw new RuntimeException("Se esperaba '{' en while.");
-                        }
-                    } else {
-                    throw new RuntimeException("Se esperaba ')' en while.");
-                    }
+            } else if (symbolTable.get(tokens.get(pos - 1).value).equals("boolean")) { // Variable booleana
+                Token conditionToken = tokens.get(pos - 1);
+                String variableName = conditionToken.value;
+
+                if (!match(11)) { // )
+                    throw new RuntimeException("Se esperaba ')'");
                 }
+                if (!match(8)) { // {
+                    throw new RuntimeException("Se esperaba '{'");
+                }
+
+                instruccionesIntermedias.add(new Triple("WHILE_BOOL", variableName, null));
+                ProdStatements();
+                instruccionesIntermedias.add(new Triple("END_WHILE", null, null));
+
+                if (!match(9)) { // }
+                    throw new RuntimeException("Se esperaba '}'");
+                }
+            }
         } else if (match(7)) { // print
             if (match(10)) { // (
                 String tipoExpr = ProdExpression();
@@ -156,7 +165,6 @@ public class Semantico {
             } else {
                 throw new RuntimeException("Se esperaba '(' en print.");
             }
-
         } else if (peek().code == 18) { // ID asignación
             advance();
             String varName = tokens.get(pos - 1).value;
@@ -177,9 +185,9 @@ public class Semantico {
                 // Verificar si es una operación aritmética
                 if (value2.code == 15) { // +, -, *
                     instruccionesIntermedias.add(new Triple("ADD", varName, value.value));
-                } else if (value2.code == 16){
+                } else if (value2.code == 16) {
                     instruccionesIntermedias.add(new Triple("MINUS", varName, value.value));
-                } else if (value2.code == 17){
+                } else if (value2.code == 17) {
                     instruccionesIntermedias.add(new Triple("MUL", varName, value.value));
                 } else {
                     instruccionesIntermedias.add(new Triple("ASSIGN", varName, value.value));
@@ -187,10 +195,8 @@ public class Semantico {
             } else {
                 throw new RuntimeException("Se esperaba '=' en asignación.");
             }
-
-        } else if (peek().code == 2 || peek().code == 3) {
+        } else if (peek().code == 2 || peek().code == 3) { // declaración
             ProdVarDeclaration();
-
         } else {
             throw new RuntimeException("Sentencia inesperada: " + peek());
         }

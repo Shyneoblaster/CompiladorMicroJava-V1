@@ -67,20 +67,18 @@ public class CodigoIntermedio {
 
                 case "WHILE":
                     codigo.append("WHILE_").append(contadorWhile).append("_START:\n");
+                    // Para expresiones relacionales (x < y)
+                    codigo.append("\tMOV \tAX, ").append(instruccion.arg1).append("\n");
+                    codigo.append("\tCMP \tAX, ").append(instruccion.arg2).append("\n");
+                    codigo.append("\tJGE \tWHILE_").append(contadorWhile).append("_END\n");
+                    contadorWhile++;
+                    break;
 
-                    String tipoArg1 = tablaSimbolos.get(instruccion.arg1);
-                    System.out.println("Generando WHILE con tipo: " + tipoArg1);
-
-                    if ("boolean".equalsIgnoreCase(tipoArg1)) {
-                        codigo.append("\tMOV \tAL, ").append(instruccion.arg1).append("\n");
-                        if ("true".equalsIgnoreCase(instruccion.arg2)) {
-                            codigo.append("\tCMP \tAL, 1\n");
-                            codigo.append("\tJNE \tWHILE_").append(contadorWhile).append("_END\n");
-                        } else {
-                            codigo.append("\tCMP \tAL, 0\n");
-                            codigo.append("\tJE \tWHILE_").append(contadorWhile).append("_END\n");
-                        }
-                    }
+                case "WHILE_BOOL":
+                    codigo.append("WHILE_").append(contadorWhile).append("_START:\n");
+                    codigo.append("\tMOV \tAL, ").append(instruccion.arg1).append("\n");
+                    codigo.append("\tCMP \tAL, 1\n");
+                    codigo.append("\tJNE \tWHILE_").append(contadorWhile).append("_END\n");
                     contadorWhile++;
                     break;
 
@@ -93,7 +91,7 @@ public class CodigoIntermedio {
                 case "PRINT":
                     codigo.append("\t; println(").append(instruccion.arg1).append(")\n");
 
-                    tipoArg1 = tablaSimbolos.get(instruccion.arg1);
+                    String tipoArg1 = tablaSimbolos.get(instruccion.arg1);
 
                     if ("int".equalsIgnoreCase(tipoArg1)) {
                         codigo.append("\tMOV \tAX, ").append(instruccion.arg1).append("\n");
