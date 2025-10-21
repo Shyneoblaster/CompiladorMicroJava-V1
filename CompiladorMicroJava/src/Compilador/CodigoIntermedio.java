@@ -2,13 +2,14 @@ package Compilador;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class CodigoIntermedio {
     private StringBuilder codigo;
-    private HashMap<String, String> tablaSimbolos;
+    private LinkedHashMap<String, String> tablaSimbolos;
     private int contadorWhile;
 
-    public CodigoIntermedio(HashMap<String, String> tablaSimbolos) {
+    public CodigoIntermedio(LinkedHashMap<String, String> tablaSimbolos) {
         this.codigo = new StringBuilder();
         this.tablaSimbolos = tablaSimbolos;
         this.contadorWhile = 0;
@@ -36,8 +37,6 @@ public class CodigoIntermedio {
                 codigo.append("\t").append(variable).append("\tDW ? ; Variable int ").append(variable).append("\n");
             } else if ("boolean".equalsIgnoreCase(tipo)) {
                 codigo.append("\t").append(variable).append("\tDB ? ; Variable boolean ").append(variable).append("\n");
-            } else {
-                throw new RuntimeException("Tipo de variable no soportado: " + tipo);
             }
         }
     }

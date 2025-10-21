@@ -5,6 +5,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class Interface extends JFrame {
 
@@ -231,7 +232,7 @@ public class Interface extends JFrame {
                         semantico.Semantico((ArrayList<Token>) tokens);
 
                         // Obtener la tabla de símbolos
-                        HashMap<String, String> tablaSimbolos = semantico.getTablaSimbolos();
+                        LinkedHashMap<String, String> tablaSimbolos = semantico.getTablaSimbolos();
 
                         // Generar código intermedio
                         ArrayList<Triple> instrucciones = semantico.getInstruccionesIntermedias();
@@ -240,6 +241,7 @@ public class Interface extends JFrame {
 
                         // Mostrar el código intermedio en el área de texto
                         txtCI.setText(codigoGenerado);
+                        btnObjeto.setEnabled(true);
                         txtError.setText("");
                     } catch (Exception ex) {
                         txtCI.setText("Error al generar código intermedio:\n" + ex.getMessage());
@@ -271,8 +273,15 @@ public class Interface extends JFrame {
         txtProg.setText("");
         txtTokens.setText("");
         txtError.setText("");
+        txtParser.setText("");
+        txtSemantico.setText("");
         txtCI.setText("");
         txtCO.setText("");
+        btnIntermedio.setEnabled(false);
+        btnParser.setEnabled(false);
+        btnObjeto.setEnabled(false);
+        btnSintactico.setEnabled(false);
+        btnTablaSimbolos.setEnabled(false);
     }
 
     private void abrirArchivo() {

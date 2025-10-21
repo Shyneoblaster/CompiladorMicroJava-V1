@@ -2,6 +2,7 @@ package Compilador;
 
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 public class Semantico {
 
@@ -10,8 +11,8 @@ public class Semantico {
     private boolean encontrado;
 
     // Tabla de símbolos (nombre → tipo)
-    private HashMap<String, String> symbolTable = new HashMap<>();
-    public HashMap<String, String> getTablaSimbolos() {
+    private LinkedHashMap<String, String> symbolTable = new LinkedHashMap<>();
+    public LinkedHashMap<String, String> getTablaSimbolos() {
         return symbolTable;
     }
 
@@ -116,7 +117,6 @@ public class Semantico {
             // Verificar si es una expresión relacional
             if (tokens.get(pos - 2).code == 14) { // Si el token anterior es un operador relacional
                 Token leftOperand = tokens.get(pos - 3);
-                Token operator = tokens.get(pos - 2);
                 Token rightOperand = tokens.get(pos - 1);
 
                 if (!match(11)) { // )

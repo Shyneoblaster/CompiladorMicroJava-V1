@@ -54,14 +54,14 @@ public class Scanner {
                     return new Token(TokenType.ID, word, 18);
             }
         }
-        // --- Números enteros ---
-        if (Character.isDigit(current)) {
-            StringBuilder sb = new StringBuilder();
-            while (Character.isDigit(peek())) {
-                sb.append(advance());
+            // --- Números enteros ---
+            if (Character.isDigit(current)) {
+                StringBuilder sb = new StringBuilder();
+                while (Character.isDigit(peek())) {
+                    sb.append(advance());
+                }
+                return new Token(TokenType.NUM, sb.toString(), 19);
             }
-            return new Token(TokenType.NUM, sb.toString(), 19);
-        }
 
         // --- Símbolos ---
         switch (advance()) {
