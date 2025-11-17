@@ -175,12 +175,12 @@ public class Semantico {
                 String tipoExpr = ProdExpression();
                 String tipoVar = symbolTable.get(varName);
                 Token value = tokens.get(pos - 1); // Último token evaluado
-                Token value2;
                 if (!tipoVar.equals(tipoExpr)) {
                     throw new RuntimeException("Incompatibilidad de tipos en asignación: variable '" + varName +
                             "' es " + tipoVar + " y se intenta asignar " + tipoExpr + ".");
                 }
                 if (!match(12)) throw new RuntimeException("Se esperaba ';' en asignación.");
+                Token value2;
                 value2 = tokens.get(pos - 3);
                 // Verificar si es una operación aritmética
                 if (value2.code == 15) { // +, -, *

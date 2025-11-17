@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class Interface extends JFrame {
@@ -254,6 +253,9 @@ public class Interface extends JFrame {
                 btnObjeto = new JButton("Codigo Objeto");
                 btnObjeto.setEnabled(false);
                 btnObjeto.setPreferredSize(new Dimension(80, 30));
+                btnObjeto.addActionListener(e ->{
+                    txtCO.setText("Función no disponible." + "\nIntentelo más adelante.");
+                });
                 panel.add(btnObjeto, BorderLayout.NORTH);
                 break;
 

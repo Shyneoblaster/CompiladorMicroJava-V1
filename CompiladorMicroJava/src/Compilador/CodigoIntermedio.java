@@ -1,7 +1,6 @@
 package Compilador;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class CodigoIntermedio {
@@ -17,7 +16,7 @@ public class CodigoIntermedio {
 
     public String generarCodigo(ArrayList<Triple> instrucciones) {
         generarEncabezado();
-        generarSeccionDatos(instrucciones);
+        generarSeccionDatos();
         generarSeccionCodigo(instrucciones);
         generarPie(instrucciones);
         return codigo.toString();
@@ -29,14 +28,14 @@ public class CodigoIntermedio {
         codigo.append("\t.STACK 100h\n");
     }
 
-    private void generarSeccionDatos(ArrayList<Triple> instrucciones) {
+    private void generarSeccionDatos() {
         codigo.append("\t.DATA\n");
         for (String variable : tablaSimbolos.keySet()) {
             String tipo = tablaSimbolos.get(variable);
             if ("int".equalsIgnoreCase(tipo)) {
-                codigo.append("\t").append(variable).append("\tDW ? ; Variable int ").append(variable).append("\n");
+                codigo.append(variable).append("\tDW \t? ; Variable int ").append(variable).append("\n");
             } else if ("boolean".equalsIgnoreCase(tipo)) {
-                codigo.append("\t").append(variable).append("\tDB ? ; Variable boolean ").append(variable).append("\n");
+                codigo.append(variable).append("\tDB \t? ; Variable boolean ").append(variable).append("\n");
             }
         }
     }
