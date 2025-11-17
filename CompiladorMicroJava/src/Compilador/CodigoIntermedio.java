@@ -135,8 +135,6 @@ public class CodigoIntermedio {
 
     private void generarPie(ArrayList<Triple> instrucciones) {
         codigo.append("\t; Terminar el programa\n");
-        codigo.append("\tMOV \tAH, 4CH\n");
-        codigo.append("\tINT \t21H\n");
         codigo.append("\t.EXIT\n");
         codigo.append("MAIN \tENDP\n");
 
