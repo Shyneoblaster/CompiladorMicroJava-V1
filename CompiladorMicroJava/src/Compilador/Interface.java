@@ -253,8 +253,39 @@ public class Interface extends JFrame {
                 btnObjeto = new JButton("Codigo Objeto");
                 btnObjeto.setEnabled(false);
                 btnObjeto.setPreferredSize(new Dimension(80, 30));
-                btnObjeto.addActionListener(e ->{
-                    txtCO.setText("Función no disponible." + "\nIntentelo más adelante.");
+                btnObjeto.addActionListener(e -> {
+                    try {
+                        // Obtener el programa fuente
+                        String codigoFuente = txtProg.getText();
+
+                        // Tokenizar el programa
+                        Scanner scanner = new Scanner(codigoFuente);
+                        java.util.List<Token> tokens = scanner.tokenize();
+
+                        // Analizar sintácticamente
+                        Parser parser = new Parser();
+                        parser.Parser((ArrayList<Token>) tokens);
+
+                        // Realizar análisis semántico
+                        Semantico semantico = new Semantico();
+                        semantico.Semantico((ArrayList<Token>) tokens);
+
+                        // Obtener la tabla de símbolos
+                        LinkedHashMap<String, String> tablaSimbolos = semantico.getTablaSimbolos();
+
+                        // Obtener las instrucciones intermedias
+                        ArrayList<Triple> instrucciones = semantico.getInstruccionesIntermedias();
+
+                        // Generar código objeto
+                        CodigoObjeto codigoObjeto = new CodigoObjeto(tablaSimbolos);
+                        String codigoGenerado = codigoObjeto.generarCodigoObjeto(instrucciones);
+
+                        // Mostrar el código objeto en el área de texto
+                        txtCO.setText(codigoGenerado);
+                        txtError.setText("");
+                    } catch (Exception ex) {
+                        txtCO.setText("Error al generar código objeto:\n" + ex.getMessage());
+                    }
                 });
                 panel.add(btnObjeto, BorderLayout.NORTH);
                 break;
