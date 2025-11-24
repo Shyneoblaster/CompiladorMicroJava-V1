@@ -67,7 +67,7 @@ public class CodigoObjeto {
 
     private void generarSeccionCodigo(ArrayList<Triple> instrucciones) {
         codigoObjeto.append("////////////////////// Sección de Codigo: //////////////////////\n\n");
-        codigoObjeto.append("   Instrucción  |        Offset        |      Contenido\n");
+        codigoObjeto.append("   Instrucción       |        Offset        |      Contenido\n");
 
         // DEBUG: imprimir Triples recibidos
         System.out.println("DEBUG: Triples recibidos:");
@@ -88,7 +88,15 @@ public class CodigoObjeto {
 
             switch (op) {
                 case "ASSIGN":
-                    entries.add(new Entry(generarMOV(a1, a2), "MOV " + a1 + ", " + a2));
+                    // Emitir según tipo de la variable destino: boolean -> AL, int -> AX
+                    String tipoDest = tablaSimbolos.get(a1);
+                    if ("boolean".equalsIgnoreCase(tipoDest)) {
+                        entries.add(new Entry(generarMOV("AL", a2), "MOV AL, " + a2));
+                        entries.add(new Entry(generarMOV(a1, "AL"), "MOV " + a1 + ", AL"));
+                    } else {
+                        entries.add(new Entry(generarMOV("AX", a2), "MOV AX, " + a2));
+                        entries.add(new Entry(generarMOV(a1, "AX"), "MOV " + a1 + ", AX"));
+                    }
                     break;
 
                 case "MOV":
@@ -97,7 +105,10 @@ public class CodigoObjeto {
                     break;
 
                 case "ADD":
-                    entries.add(new Entry(generarADD(a1, a2), "ADD " + a1 + ", " + a2));
+                    // Mantener la semántica de CodigoIntermedio: cargar, operar, guardar
+                    entries.add(new Entry(generarMOV("AX", a1), "MOV AX, " + a1));
+                    entries.add(new Entry(generarADD("AX", a2), "ADD AX, " + a2));
+                    entries.add(new Entry(generarMOV(a1, "AX"), "MOV " + a1 + ", AX"));
                     break;
 
                 case "SUB":
@@ -109,21 +120,26 @@ public class CodigoObjeto {
                     entries.add(new Entry(generarCMP(a1, a2), "CMP " + a1 + ", " + a2));
                     break;
 
-                case "PRINT":
-                {
+                case "PRINT": {
                     String tipoArg = tablaSimbolos.get(a1);
                     if ("int".equalsIgnoreCase(tipoArg)) {
                         entries.add(new Entry(generarMOV("AX", a1), "MOV AX, " + a1));
+                        entries.add(new Entry("11101000" + " | " + "{D16:PrintNumber}", "CALL PrintNumber"));
                     } else if ("boolean".equalsIgnoreCase(tipoArg)) {
                         entries.add(new Entry(generarMOV("AL", a1), "MOV AL, " + a1));
                         entries.add(new Entry(generarMOV("AH", "0"), "MOV AH, 0"));
-                    } else {
-                        entries.add(new Entry(generarMOV("AX", a1), "MOV AX, " + a1));
+                        entries.add(new Entry("11101000" + " | " + "{D16:PrintNumber}", "CALL PrintNumber"));
                     }
-                    entries.add(new Entry("11101000" + " | " + "{D16:PrintNumber}", "CALL PrintNumber"));
                     necesitaPrintRoutine = true;
+                    // Después del CALL: CR y LF
+                    entries.add(new Entry(generarMOV("DL", "13"), "MOV DL, 13"));
+                    entries.add(new Entry(generarMOV("AH", "2"), "MOV AH, 02h"));
+                    entries.add(new Entry(generarINT("33"), "INT 21h"));
+                    entries.add(new Entry(generarMOV("DL", "10"), "MOV DL, 10"));
+                    entries.add(new Entry(generarMOV("AH", "2"), "MOV AH, 02h"));
+                    entries.add(new Entry(generarINT("33"), "INT 21h"));
+                    break;
                 }
-                break;
 
                 case "WHILE":
                     String startLbl = "WHILE_" + whileCounter + "_START";
@@ -135,13 +151,23 @@ public class CodigoObjeto {
                     whileCounter++;
                     break;
 
+                case "WHILE_BOOL":
+                    String sLbl = "WHILE_" + whileCounter + "_START";
+                    String eLbl = "WHILE_" + whileCounter + "_END";
+                    entries.add(new Entry(sLbl));
+                    entries.add(new Entry(generarMOV("AL", a1), "MOV AL, " + a1));
+                    entries.add(new Entry(generarCMP("AL", "1"), "CMP AL, 1"));
+                    entries.add(new Entry("01110101" + " | " + "{D8:" + eLbl + "}", "JNE " + eLbl));
+                    whileCounter++;
+                    break;
+
                 case "END_WHILE":
                     int idx = whileCounter - 1;
                     if (idx < 0) idx = 0;
-                    String sLbl = "WHILE_" + idx + "_START";
-                    String eLbl = "WHILE_" + idx + "_END";
-                    entries.add(new Entry("11101011" + " | " + "{D8:" + sLbl + "}", "JMP " + sLbl));
-                    entries.add(new Entry(eLbl));
+                    String sLbl2 = "WHILE_" + idx + "_START";
+                    String eLbl2 = "WHILE_" + idx + "_END";
+                    entries.add(new Entry("11101011" + " | " + "{D8:" + sLbl2 + "}", "JMP " + sLbl2));
+                    entries.add(new Entry(eLbl2));
                     break;
 
                 case "MUL":
@@ -169,15 +195,43 @@ public class CodigoObjeto {
                     break;
 
                 default:
-                    // ignorar u opcional
+                    // ignorar instrucciones no mapeadas
                     break;
             }
         }
 
-        // Si hubo PRINTs, añadimos rutina PrintNumber simple (etiqueta y RET)
+        // Si hubo PRINTs, añadimos rutina PrintNumber completa (etiquetas y cuerpo)
         if (necesitaPrintRoutine) {
             entries.add(new Entry("PrintNumber"));
-            entries.add(new Entry("11000011", "RET"));
+            // Push registers
+            entries.add(new Entry(generarPUSH("AX"), "PUSH AX"));
+            entries.add(new Entry(generarPUSH("BX"), "PUSH BX"));
+            entries.add(new Entry(generarPUSH("CX"), "PUSH CX"));
+            entries.add(new Entry(generarPUSH("DX"), "PUSH DX"));
+            // MOV CX,0 ; MOV BX,10
+            entries.add(new Entry(generarMOV("CX", "0"), "MOV CX, 0"));
+            entries.add(new Entry(generarMOV("BX", "10"), "MOV BX, 10"));
+            // CONVERT:
+            entries.add(new Entry("CONVERT"));
+            entries.add(new Entry(generarXOR("DX", "DX"), "XOR DX, DX"));
+            entries.add(new Entry(generarDIV("BX"), "DIV BX"));
+            entries.add(new Entry(generarPUSH("DX"), "PUSH DX"));
+            entries.add(new Entry(generarINC("CX"), "INC CX"));
+            entries.add(new Entry(generarTEST("AX", "AX"), "TEST AX, AX"));
+            entries.add(new Entry("01110101" + " | " + "{D8:CONVERT}", "JNZ CONVERT"));
+            // PRINT_LOOP:
+            entries.add(new Entry("PRINT_LOOP"));
+            entries.add(new Entry(generarPOP("DX"), "POP DX"));
+            entries.add(new Entry(generarADD("DL", String.valueOf(48)), "ADD DL, '0'"));
+            entries.add(new Entry(generarMOV("AH", "2"), "MOV AH, 02h"));
+            entries.add(new Entry(generarINT("33"), "INT 21h"));
+            entries.add(new Entry("11100010" + " | " + "{D8:PRINT_LOOP}", "LOOP PRINT_LOOP"));
+            // Restore and RET
+            entries.add(new Entry(generarPOP("DX"), "POP DX"));
+            entries.add(new Entry(generarPOP("CX"), "POP CX"));
+            entries.add(new Entry(generarPOP("BX"), "POP BX"));
+            entries.add(new Entry(generarPOP("AX"), "POP AX"));
+            entries.add(new Entry(generarRET(), "RET"));
         }
 
         // 2) Primera pasada: calcular offsets y tamaños
@@ -202,7 +256,7 @@ public class CodigoObjeto {
                 String labelLine = String.format("%-20s", e.labelName + ":");
                 String offsetStr = String.format("%16s", Integer.toBinaryString(e.offsetBytes)).replace(' ', '0');
                 offsetStr = offsetStr.replaceAll("(.{4})", "$1 ");
-                codigoObjeto.append(String.format("%s | %s | %s\n", labelLine, offsetStr, "<LABEL>"));
+                codigoObjeto.append(String.format("%s | %s | %s\n", labelLine, offsetStr, "<Etiqueta>"));
                 continue;
             }
             String finalOpcode = resolvePlaceholders(e.template, e.offsetBytes, e.sizeBytes, labelOffsets);
@@ -213,6 +267,7 @@ public class CodigoObjeto {
             codigoObjeto.append(String.format("%s | %s | %s\n", instruccionStr, offsetStr, finalOpcode));
         }
     }
+
 
     // Cuenta bits en una plantilla: reemplaza placeholders por ceros y cuenta bits (sin separadores)
     private int countBitsInTemplate(String template) {
@@ -271,12 +326,19 @@ public class CodigoObjeto {
     // Traducción de instrucciones (devuelve plantilla binaria)
     // generarMOV: usar little-endian para immediatos de 16-bit
     private String generarMOV(String destino, String fuente) {
+        // Normalizar literales booleanas
+        if (fuente != null) {
+            if (fuente.equalsIgnoreCase("true")) fuente = "1";
+            else if (fuente.equalsIgnoreCase("false")) fuente = "0";
+        }
+
         String w = calcularW(destino, fuente);
         if (tablaSimbolos.containsKey(destino)) {
             String tipo = tablaSimbolos.get(destino);
             if ("int".equalsIgnoreCase(tipo)) w = "1"; else w = "0";
         }
 
+        // Caso inmediato
         if (isNumeric(fuente)) {
             if (esRegistro(destino)) {
                 String reg = calcularReg(destino, w);
@@ -291,27 +353,46 @@ public class CodigoObjeto {
             return opcodeBase + " | " + modrm + " | " + imm;
         }
 
+        // Caso register <-> memoria / register
         String d = calcularD(destino, fuente);
-        String reg = calcularReg(destino, w);
 
+        // El campo 'reg' del ModR/M debe contener siempre el registro (si hay),
+        // es decir: si hay un registro entre los operandos, usar ese registro.
+        String regField;
+        if (esRegistro(fuente)) regField = calcularReg(fuente, w); // fuente es registro -> reg = fuente
+        else regField = calcularReg(destino, w); // fuente no-reg -> reg = destino (caso inusual)
+
+        // Determinar qué operando se codifica como r/m y el valor de 'mod'
         String mod;
-        if (esRegistro(fuente)) {
-            mod = "11";
+        String rmOperand;
+        if (esRegistro(destino)) {
+            // r/m = fuente
+            mod = esRegistro(fuente) ? "11" : "00";
+            rmOperand = fuente;
         } else {
+            // r/m = destino (memoria directa) -> mod = 00 y calcularModRM añadirá displacement
             mod = "00";
+            rmOperand = destino;
         }
-        String modRM = calcularModRM(mod, reg, fuente, w);
+
+        String modRM = calcularModRM(mod, regField, rmOperand, w);
         return "100010" + d + w + " | " + modRM;
     }
+
 
     // generarADD: immediato 16-bit en little-endian
     private String generarADD(String destino, String fuente) {
         if (isNumeric(fuente)) {
             String w = calcularW(destino, fuente);
+            String s = calcularS(fuente, w);           // usar s cuando el inmediato cabe en signed 8-bit
             String regField = "000"; // /0 para ADD
-            String modrm = calcularModRM("00", regField, destino, w);
-            String immBin = w.equals("1") ? formatWordLittleEndian(fuente) : aBinario8(fuente).replaceAll("(.{4})", "$1 ").trim();
-            return "100000" + " | " + modrm + " | " + immBin;
+            // Si el destino es registro, mod = 11 (registro); si es memoria, mod = 00 (r/m)
+            String mod = esRegistro(destino) ? "11" : "00";
+            String modrm = calcularModRM(mod, regField, destino, w);
+            String immBin = w.equals("1")
+                    ? formatWordLittleEndian(fuente)
+                    : aBinario8(fuente).replaceAll("(.{4})", "$1 ").trim();
+            return "100000" + s + w + " | " + modrm + " | " + immBin;
         } else {
             String w = calcularW(destino, fuente);
             String d = calcularD(destino, fuente);
@@ -366,7 +447,7 @@ public class CodigoObjeto {
     }
 
     private String generarINT(String data) {
-        return "11001101" + aBinario8(data);
+        return "11001101" + " | " + aBinario8(data);
     }
 
     private String generarXOR(String destino, String fuente) {
@@ -384,9 +465,24 @@ public class CodigoObjeto {
 
     private String generarTEST(String destino, String fuente) {
         String w = calcularW(destino, fuente);
-        String reg = calcularReg(destino, w);
-        String modRM = calcularModRM("11", reg, fuente, w);
-        return "100001" + w + " | " + modRM;
+        String d = calcularD(destino, fuente); // incluir bit d según plantilla solicitada
+
+        // el campo 'reg' debe contener el registro de la segunda operando (fuente)
+        String reg = calcularReg(fuente, w);
+
+        // determinar mod y operando r/m según si destino es registro o memoria
+        String mod;
+        String rmOperand;
+        if (esRegistro(destino)) {
+            mod = "11";
+            rmOperand = destino;
+        } else {
+            mod = "00";
+            rmOperand = destino;
+        }
+
+        String modRM = calcularModRM(mod, reg, rmOperand, w);
+        return "000100" + d + w + " | " + modRM;
     }
 
     private String generarJNZ(String etiqueta, int offset) {
@@ -404,6 +500,15 @@ public class CodigoObjeto {
     }
 
     private String calcularW(String destino, String fuente) {
+        // Si destino es una variable conocida, usar su tipo
+        if (destino != null && tablaSimbolos.containsKey(destino)) {
+            return "int".equalsIgnoreCase(tablaSimbolos.get(destino)) ? "1" : "0";
+        }
+        // Si fuente es una variable conocida, usar su tipo
+        if (fuente != null && tablaSimbolos.containsKey(fuente)) {
+            return "int".equalsIgnoreCase(tablaSimbolos.get(fuente)) ? "1" : "0";
+        }
+        // fallback: registros 16-bit determinan w
         return (esRegistro16(destino) || esRegistro16(fuente)) ? "1" : "0";
     }
 
